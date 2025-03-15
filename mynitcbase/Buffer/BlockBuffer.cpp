@@ -5,6 +5,24 @@
 
 // the declarations for these functions can be found in "BlockBuffer.h"
 
+int compareAttrs(union Attribute attr1, union Attribute attr2, int attrType)
+{
+  int diff;
+  (attrType == NUMBER) ? diff = attr1.nVal - attr2.nVal : diff = strcmp(attr1.sVal, attr2.sVal);
+  if (diff > 0)
+  {
+      return 1; // attr1 > attr2
+  }
+  else if (diff < 0)
+  {
+      return -1; //attr 1 < attr2
+  }
+  else
+  { 
+      return 0;
+  }
+}
+
 BlockBuffer::BlockBuffer(int blockNum) 
 {
     // initialise this.blockNum with the argument
@@ -69,6 +87,34 @@ int RecBuffer::getRecord(union Attribute *rec, int slotNum)
   return SUCCESS;
 }
 
+/* used to get the slotmap from a record block
+NOTE: this function expects the caller to allocate memory for `*slotMap`
+*/
+int RecBuffer::getSlotMap(unsigned char *slotMap)
+{
+  unsigned char *bufferPtr;
+
+  // get the starting address of the buffer containing the block using loadBlockAndGetBufferPtr().
+  int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+  if (ret != SUCCESS)
+  {
+    return ret;
+  }
+
+  struct HeadInfo head;
+  // get the header of the block using getHeader() function
+  getHeader(&head);
+
+  int slotCount = head.numSlots;
+
+  // get a pointer to the beginning of the slotmap in memory by offsetting HEADER_SIZE
+  unsigned char *slotMapInBuffer = bufferPtr + HEADER_SIZE;
+
+  // copy the values from `slotMapInBuffer` to `slotMap` (size is `slotCount`)
+  memcpy(slotMap, slotMapInBuffer, slotCount);
+  return SUCCESS;
+}
+
 /*
 Used to load a block to the buffer and get a pointer to it.
 NOTE: this function expects the caller to allocate memory for the argument
@@ -94,3 +140,5 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
   *buffPtr = StaticBuffer::blocks[bufferNum];
   return SUCCESS;
 }
+
+

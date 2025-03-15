@@ -14,7 +14,10 @@ int AttrCacheTable::getAttrCatEntry(int relId, int attrOffset, AttrCatEntry* att
     return E_OUTOFBOUND;
   }
   // check if attrCache[relId] == nullptr and return E_RELNOTOPEN if true
-
+  if (attrCache[relId] == nullptr)
+  {
+    return E_RELNOTOPEN;
+  }
   // traverse the linked list of attribute cache entries
   for (AttrCacheEntry* entry = attrCache[relId]; entry != nullptr; entry = entry->next) 
   {
@@ -42,5 +45,43 @@ void AttrCacheTable::recordToAttrCatEntry(union Attribute record[ATTRCAT_NO_ATTR
   attrCatEntry->rootBlock = (int)record[ATTRCAT_ROOT_BLOCK_INDEX].nVal;
   attrCatEntry->offset = (int)record[ATTRCAT_OFFSET_INDEX].nVal;
   // copy the rest of the fields in the record to the attrCacheEntry struct
+}
+
+/* returns the attribute with name `attrName` for the relation corresponding to relId
+NOTE: this function expects the caller to allocate memory for `*attrCatBuf`
+*/
+int AttrCacheTable::getAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCatEntry* attrCatBuf)
+{
+
+  // check that relId is valid and corresponds to an open relation
+  if (relId < 0 || relId >= MAX_OPEN)
+  {
+      return E_OUTOFBOUND;
+  }
+
+  if (attrCache[relId] == nullptr)
+  {
+    return E_RELNOTOPEN;
+  }
+
+  // iterate over the entries in the attribute cache and set attrCatBuf to the entry that
+  //    matches attrName
+  AttrCacheEntry* attrCacheEntry = nullptr;
+  for (auto iter = AttrCacheTable::attrCache[relId]; iter != nullptr; iter = iter->next) 
+  {
+      if (strcmp(attrName, (iter->attrCatEntry).attrName) == 0)
+      {
+          attrCacheEntry = iter;
+          break;
+      }
+  }
+  
+  if (attrCacheEntry == nullptr)
+  {
+    return E_ATTRNOTEXIST;
+  }
+
+  *attrCatBuf = attrCacheEntry->attrCatEntry;
+  return SUCCESS;
 }
 
