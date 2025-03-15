@@ -96,7 +96,7 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
            AttrCacheTable::getAttrCatEntry(srcRelId,i,&attrCatEntry);
            if (attrCatEntry.attrType == NUMBER) 
            { 
-               printf(" %f |", record[i].nVal);
+               printf(" %d |", record[i].nVal);
            } 
            else if (attrCatEntry.attrType == STRING) 
            {
