@@ -3,7 +3,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool isNumber(char* str);
+// will return if a string can be parsed as a floating point number
+bool isNumber(char *str)
+{
+  int len;
+  float ignore;
+  /*
+    sscanf returns the number of elements read, so if there is no float matching
+    the first %f, ret will be 0, else it'll be 1
+
+    %n gets the number of characters read. this scanf sequence will read the
+    first float ignoring all the whitespace before and after. and the number of
+    characters read that far will be stored in len. if len == strlen(str), then
+    the string only contains a float with/without whitespace. else, there's other
+    characters.
+  */
+  int ret = sscanf(str, "%f %n", &ignore, &len);
+  return ret == 1 && len == strlen(str);
+}
 
 /* used to select all the records that satisfy a condition.
 the arguments of the function are
@@ -112,25 +129,73 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
       }
     }
     return SUCCESS;
-  }
+}
   
-  
-  // will return if a string can be parsed as a floating point number
-  bool isNumber(char *str)
-  {
-    int len;
-    float ignore;
+int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE])
+{
+    // if relName is equal to "RELATIONCAT" or "ATTRIBUTECAT"
+    // return E_NOTPERMITTED;
+    if(strcmp(relName,(char*)RELCAT_RELNAME)==0 || strcmp(relName,(char*)ATTRCAT_RELNAME)==0)
+    {
+       return E_NOTPERMITTED;
+    }
+    // get the relation's rel-id using OpenRelTable::getRelId() method
+    int relId = OpenRelTable::getRelId(relName);
+    // if relation is not open in open relation table, return E_RELNOTOPEN
+    // (check if the value returned from getRelId function call = E_RELNOTOPEN)
+    // get the relation catalog entry from relation cache
+    // (use RelCacheTable::getRelCatEntry() of Cache Layer)
+    if(relId == E_RELNOTOPEN)
+    {
+      return E_RELNOTOPEN;
+    }
+    RelCatEntry relCatBuf;
+    RelCacheTable::getRelCatEntry(relId,&relCatBuf);
+    /* if relCatEntry.numAttrs != numberOfAttributes in relation,
+       return E_NATTRMISMATCH */
+    if(relCatBuf.numAttrs!=nAttrs)
+    {
+       return E_NATTRMISMATCH;
+    }
+    // let recordValues[numberOfAttributes] be an array of type union Attribute
+    Attribute recordValues[nAttrs];
     /*
-      sscanf returns the number of elements read, so if there is no float matching
-      the first %f, ret will be 0, else it'll be 1
-  
-      %n gets the number of characters read. this scanf sequence will read the
-      first float ignoring all the whitespace before and after. and the number of
-      characters read that far will be stored in len. if len == strlen(str), then
-      the string only contains a float with/without whitespace. else, there's other
-      characters.
-    */
-    int ret = sscanf(str, "%f %n", &ignore, &len);
-    return ret == 1 && len == strlen(str);
-  }
-  
+        Converting 2D char array of record values to Attribute array recordValues
+     */
+
+    // iterate through 0 to nAttrs-1: (let i be the iterator)
+    for (int i = 0; i < nAttrs; i++)
+    {
+        // get the attr-cat entry for the i'th attribute from the attr-cache
+        // (use AttrCacheTable::getAttrCatEntry())
+        AttrCatEntry attrCatBuf;
+        AttrCacheTable::getAttrCatEntry(relId, i, &attrCatBuf);
+        // let type = attrCatEntry.attrType;
+        int type=attrCatBuf.attrType;
+        if (type == NUMBER)
+        {
+            // if the char array record[i] can be converted to a number
+            // (check this using isNumber() function)
+            if(isNumber(record[i]))
+            {
+                /* convert the char array to numeral and store it
+                   at recordValues[i].nVal using atof() */
+                recordValues[i].nVal=atof(record[i]);
+            }
+            else
+            {
+                return E_ATTRTYPEMISMATCH;
+            }
+        }
+        else if (type == STRING)
+        {
+            // copy record[i] to recordValues[i].sVal
+            strcpy(recordValues[i].sVal,record[i]);
+        }
+    }
+
+    // insert the record by calling BlockAccess::insert() function
+    // let retVal denote the return value of insert call
+    int retVal=BlockAccess::insert(relId, recordValues);
+    return retVal;
+}
