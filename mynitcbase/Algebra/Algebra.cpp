@@ -115,7 +115,11 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   /* Before calling the search function, reset the search to start from the
      first using RelCacheTable::resetSearchIndex() */
   RelCacheTable::resetSearchIndex(srcRelId);
+  AttrCacheTable::resetSearchIndex(srcRelId,attr);
   Attribute record[src_nAttrs];
+  // modifications to print number of comparisons
+  //StaticBuffer::numCompares = 0;
+
 
   /*
       The BlockAccess::search() function can either do a linearSearch or
@@ -150,6 +154,9 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
         return ret;
       }
   }
+  
+  //modifications to print number of comparisons
+  //printf("Number of comparisons done: %d\n", StaticBuffer::numCompares);
 
   // Close the targetRel by calling closeRel() method of schema layer
   OpenRelTable::closeRel(targetRelId);
