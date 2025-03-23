@@ -290,7 +290,7 @@ int BlockAccess::insert(int relId, Attribute *record)
     {
        return ret;
     }
-    int blockNum = relCatBuf.firstBlk;
+    int blockNum = relCatBuf.lastBlk;
 
     // rec_id will be used to store where the new record will be inserted
     RecId rec_id = {-1, -1};

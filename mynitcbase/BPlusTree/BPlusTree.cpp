@@ -10,7 +10,6 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
     /* get the search index corresponding to attribute with name attrName
        using AttrCacheTable::getSearchIndex(). */
     AttrCacheTable::getSearchIndex(relId,attrName,&searchIndex);
-    AttrCatEntry attrCatEntry;
     /* load the attribute cache entry into attrCatEntry using
      AttrCacheTable::getAttrCatEntry(). */
     AttrCatEntry attrCatEntry;
