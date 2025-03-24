@@ -347,7 +347,7 @@ int BlockAccess::insert(int relId, Attribute *record)
     }
 
     //  if no free slot is found in existing record blocks (rec_id = {-1, -1})
-    if (rec_id.block == -1 || rec_id.slot == -1)
+    if (rec_id.block == -1 && rec_id.slot == -1)
     {
         // if relation is RELCAT, do not allocate any more blocks
         //     return E_MAXRELATIONS;
@@ -422,9 +422,10 @@ int BlockAccess::insert(int relId, Attribute *record)
             // update first block field in the relation catalog entry to the
             // new block (using RelCacheTable::setRelCatEntry() function)
             relCatBuf.firstBlk = rec_id.block;
-            relCatBuf.lastBlk = rec_id.block;
             RelCacheTable::setRelCatEntry(relId, &relCatBuf);
         }
+        relCatBuf.lastBlk = rec_id.block;
+        RelCacheTable::setRelCatEntry(relId, &relCatBuf);
     }
 
     // create a RecBuffer object for rec_id.block
