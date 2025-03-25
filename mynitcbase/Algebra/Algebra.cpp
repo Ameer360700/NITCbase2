@@ -104,18 +104,17 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
      method and store the target relid */
   /* If opening fails, delete the target relation by calling Schema::deleteRel()
      and return the error value returned from openRel() */
-  int targetRelId = OpenRelTable::openRel(targetRel);
-  if (targetRelId < 0 || targetRelId >= MAX_OPEN)
+  ret = OpenRelTable::openRel(targetRel);
+  if (ret < 0)
   {
     Schema::deleteRel(targetRel);
-    return targetRelId;
+    return ret;
   }
-
+  int targetRelId = OpenRelTable::getRelId(targetRel);
   /*** Selecting and inserting records into the target relation ***/
   /* Before calling the search function, reset the search to start from the
      first using RelCacheTable::resetSearchIndex() */
   RelCacheTable::resetSearchIndex(srcRelId);
-  AttrCacheTable::resetSearchIndex(srcRelId,attr);
   Attribute record[src_nAttrs];
   // modifications to print number of comparisons
   //StaticBuffer::numCompares = 0;
@@ -133,7 +132,8 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   */
   // RelCacheTable::resetSearchIndex(/* fill arguments */);
   // AttrCacheTable::resetSearchIndex(/* fill arguments */);
-
+  RelCacheTable::resetSearchIndex(srcRelId);
+  AttrCacheTable::resetSearchIndex(srcRelId, attr);
   // read every record that satisfies the condition by repeatedly calling
   // BlockAccess::search() until there are no more records to be read
  

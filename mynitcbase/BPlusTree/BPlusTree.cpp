@@ -217,7 +217,7 @@ int BPlusTree::bPlusCreate(int relId, char attrName[ATTR_SIZE])
 
     // if relId is either RELCAT_RELID or ATTRCAT_RELID:
     //     return E_NOTPERMITTED;
-    if(relId == RELCAT_RELID || relId == ATTRCAT_RELID)
+    if(relId == RELCAT_BLOCK || relId == ATTRCAT_BLOCK)
     {
         return E_NOTPERMITTED;
     }
@@ -260,11 +260,7 @@ int BPlusTree::bPlusCreate(int relId, char attrName[ATTR_SIZE])
 
     // load the relation catalog entry into relCatEntry
     // using RelCacheTable::getRelCatEntry().
-    ret = RelCacheTable::getRelCatEntry(relId,&relCatEntry);
-    if(ret != SUCCESS)
-    {
-        return ret;
-    }
+    RelCacheTable::getRelCatEntry(relId,&relCatEntry);
     int block = relCatEntry.firstBlk;
 
     /***** Traverse all the blocks in the relation and insert them one
@@ -282,29 +278,29 @@ int BPlusTree::bPlusCreate(int relId, char attrName[ATTR_SIZE])
         {
             if(slotMap[i] == SLOT_UNOCCUPIED)
             {
-                continue;
+                Attribute record[relCatEntry.numAttrs];
+                // load the record corresponding to the slot into `record`
+                // using RecBuffer::getRecord().
+                currentBlock.getRecord(record,i);
+                // declare recId and store the rec-id of this record in it
+                // RecId recId{block, slot};
+                RecId recId = {block,i};
+                // insert the attribute value corresponding to attrName from the record
+                // into the B+ tree using bPlusInsert.
+                // (note that bPlusInsert will destroy any existing bplus tree if
+                // insert fails i.e when disk is full)
+                // retVal = bPlusInsert(relId, attrName, attribute value, recId);
+                int retVal = BPlusTree::bPlusInsert(relId,attrName,record[attrCatBuf.offset],recId);
+                // if (retVal == E_DISKFULL) {
+                //     // (unable to get enough blocks to build the B+ Tree.)
+                //     return E_DISKFULL;
+                // }
+                if(retVal == E_DISKFULL)
+                {
+                    return E_DISKFULL;
+                }
             }
-            Attribute record[relCatEntry.numAttrs];
-            // load the record corresponding to the slot into `record`
-            // using RecBuffer::getRecord().
-            currentBlock.getRecord(record,i);
-            // declare recId and store the rec-id of this record in it
-            // RecId recId{block, slot};
-            RecId recId = {block,i};
-            // insert the attribute value corresponding to attrName from the record
-            // into the B+ tree using bPlusInsert.
-            // (note that bPlusInsert will destroy any existing bplus tree if
-            // insert fails i.e when disk is full)
-            // retVal = bPlusInsert(relId, attrName, attribute value, recId);
-            int retVal = BPlusTree::bPlusInsert(relId,attrName,record[attrCatBuf.offset],recId);
-            // if (retVal == E_DISKFULL) {
-            //     // (unable to get enough blocks to build the B+ Tree.)
-            //     return E_DISKFULL;
-            // }
-            if(retVal == E_DISKFULL)
-            {
-                return E_DISKFULL;
-            }
+            
         }
 
         // get the header of the block using BlockBuffer::getHeader()
@@ -417,7 +413,7 @@ int BPlusTree::bPlusInsert(int relId, char attrName[ATTR_SIZE], Attribute attrVa
     entry.attrVal = attrVal;
     entry.block = recId.block;
     entry.slot = recId.slot;
-    int ret = insertIntoLeaf(relId,attrName,leafBlkNum,entry);
+    ret = insertIntoLeaf(relId,attrName,leafBlkNum,entry);
     if (ret == E_DISKFULL)
     {
         // destroy the existing B+ tree by passing the rootBlock to bPlusDestroy().

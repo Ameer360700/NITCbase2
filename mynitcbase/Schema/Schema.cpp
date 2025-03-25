@@ -218,7 +218,7 @@ int Schema::deleteRel(char *relName)
   */
 }
 
-int createIndex(char relName[ATTR_SIZE],char attrName[ATTR_SIZE])
+int Schema::createIndex(char relName[ATTR_SIZE],char attrName[ATTR_SIZE])
 {
   // if the relName is either Relation Catalog or Attribute Catalog,
       // return E_NOTPERMITTED
