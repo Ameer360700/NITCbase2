@@ -347,7 +347,7 @@ int BlockAccess::insert(int relId, Attribute *record)
     }
 
     //  if no free slot is found in existing record blocks (rec_id = {-1, -1})
-    if (rec_id.block == -1 && rec_id.slot == -1)
+    if (rec_id.block == -1 || rec_id.slot == -1)
     {
         // if relation is RELCAT, do not allocate any more blocks
         //     return E_MAXRELATIONS;
@@ -512,7 +512,7 @@ int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], 
     }
     // if there's no record satisfying the given condition (recId = {-1, -1})
     //     return E_NOTFOUND;
-    if(recId.block == -1 && recId.slot == -1)
+    if(recId.block == -1 || recId.slot == -1)
     {
         return E_NOTFOUND;
     }

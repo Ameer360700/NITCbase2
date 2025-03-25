@@ -104,18 +104,17 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
      method and store the target relid */
   /* If opening fails, delete the target relation by calling Schema::deleteRel()
      and return the error value returned from openRel() */
-  ret = OpenRelTable::openRel(targetRel);
-  if (ret < 0)
+  int targetRelId = OpenRelTable::openRel(targetRel);
+  if (targetRelId < 0 || targetRelId >= MAX_OPEN)
   {
     Schema::deleteRel(targetRel);
-    return ret;
+    return targetRelId;
   }
-  int targetRelId = OpenRelTable::getRelId(targetRel);
+  
   /*** Selecting and inserting records into the target relation ***/
   /* Before calling the search function, reset the search to start from the
      first using RelCacheTable::resetSearchIndex() */
-  RelCacheTable::resetSearchIndex(srcRelId);
-  Attribute record[src_nAttrs];
+  
   // modifications to print number of comparisons
   //StaticBuffer::numCompares = 0;
 
@@ -136,7 +135,7 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
   AttrCacheTable::resetSearchIndex(srcRelId, attr);
   // read every record that satisfies the condition by repeatedly calling
   // BlockAccess::search() until there are no more records to be read
- 
+  Attribute record[src_nAttrs];
   while (BlockAccess::search(srcRelId, record, attr, attrVal, op) == SUCCESS)
   {
 
@@ -219,7 +218,7 @@ int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE
                 return E_ATTRTYPEMISMATCH;
             }
         }
-        else if (type == STRING)
+        else
         {
             // copy record[i] to recordValues[i].sVal
             strcpy(recordValues[i].sVal,record[i]);

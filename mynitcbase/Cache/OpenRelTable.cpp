@@ -1,7 +1,7 @@
 #include "OpenRelTable.h"
 #include <cstring>
 #include <stdlib.h>
-
+#include <stdio.h>
 OpenRelTableMetaInfo OpenRelTable::tableMetaInfo[MAX_OPEN];
 
 AttrCacheEntry* createList(int length) 

@@ -430,7 +430,7 @@ int IndInternal::getEntry(void *ptr, int indexNum)
 {
   // if the indexNum is not in the valid range of [0, MAX_KEYS_INTERNAL-1]
   //     return E_OUTOFBOUND.
-  if(indexNum < 0 || indexNum >=MAX_KEYS_INTERNAL)
+  if(indexNum < 0 || indexNum >= MAX_KEYS_INTERNAL)
   {
     return E_OUTOFBOUND;
   }
@@ -462,7 +462,7 @@ int IndInternal::getEntry(void *ptr, int indexNum)
 
   memcpy(&(internalEntry->lChild), entryPtr, sizeof(int32_t));
   memcpy(&(internalEntry->attrVal), entryPtr + 4, sizeof(Attribute));
-  memcpy(&(internalEntry->rChild), entryPtr + 20, sizeof(int32_t));
+  memcpy(&(internalEntry->rChild), entryPtr + 4 + ATTR_SIZE, sizeof(int32_t));
 
   return SUCCESS;
 }
@@ -471,7 +471,7 @@ int IndInternal::setEntry(void *ptr, int indexNum)
 {
   // if the indexNum is not in the valid range of [0, MAX_KEYS_INTERNAL-1]
   //     return E_OUTOFBOUND.
-  if(indexNum < 0 || indexNum >=MAX_KEYS_INTERNAL)
+  if(indexNum < 0 || indexNum >= MAX_KEYS_INTERNAL)
   {
     return E_OUTOFBOUND;
   }
@@ -504,7 +504,7 @@ int IndInternal::setEntry(void *ptr, int indexNum)
 
   memcpy(entryPtr, &(internalEntry->lChild), sizeof(int32_t));
   memcpy(entryPtr + 4, &(internalEntry->attrVal), ATTR_SIZE);
-  memcpy(entryPtr + 20, &(internalEntry->rChild), sizeof(int32_t));
+  memcpy(entryPtr + 4 + ATTR_SIZE, &(internalEntry->rChild), sizeof(int32_t));
 
 
   // update dirty bit using setDirtyBit()
@@ -519,7 +519,7 @@ int IndLeaf::getEntry(void *ptr, int indexNum)
 
   // if the indexNum is not in the valid range of [0, MAX_KEYS_LEAF-1]
   //     return E_OUTOFBOUND.
-  if(indexNum < 0 || indexNum >=MAX_KEYS_INTERNAL)
+  if(indexNum < 0 || indexNum >=MAX_KEYS_LEAF)
   {
     return E_OUTOFBOUND;
   }
@@ -548,16 +548,22 @@ int IndLeaf::setEntry(void *ptr, int indexNum)
 
   // if the indexNum is not in the valid range of [0, MAX_KEYS_LEAF-1]
   //     return E_OUTOFBOUND.
-
-  unsigned char *bufferPtr;
+  if (indexNum < 0 || indexNum >= MAX_KEYS_LEAF)
+  {
+        return E_OUTOFBOUND;
+  }
   /* get the starting address of the buffer containing the block
      using loadBlockAndGetBufferPtr(&bufferPtr). */
-
+  unsigned char* bufferPtr;
   // if loadBlockAndGetBufferPtr(&bufferPtr) != SUCCESS
   //     return the value returned by the call.
-
+  int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+  if (ret != SUCCESS)
+  {
+    return ret;
+  }
   // copy the Index at ptr to indexNum'th entry in the buffer using memcpy
-
+  Index* index = (Index*) ptr;
   /* the indexNum'th entry will begin at an offset of
      HEADER_SIZE + (indexNum * LEAF_ENTRY_SIZE)  from bufferPtr */
   unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * LEAF_ENTRY_SIZE);

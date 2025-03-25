@@ -108,16 +108,17 @@ int AttrCacheTable::setAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCat
     return E_RELNOTOPEN;
   }
 
-  for(auto iter = AttrCacheTable::attrCache[relId]; iter != nullptr; iter = iter->next)
+  for(auto attrCacheEntry = attrCache[relId]; attrCacheEntry != nullptr; attrCacheEntry = attrCacheEntry->next)
   {
-    if(strcmp(attrName, (iter->attrCatEntry).attrName)==0)
+    auto attrCatEntry = attrCacheEntry->attrCatEntry;
+    if(strcmp(attrCatEntry.attrName, attrName)==0)
     {
       // copy the attrCatBuf to the corresponding Attribute Catalog entry in
       // the Attribute Cache Table.
-      iter->attrCatEntry=*attrCatBuf;
       // set the dirty flag of the corresponding Attribute Cache entry in the
       // Attribute Cache Table.
-      iter->dirty=true;
+      attrCacheEntry->attrCatEntry = *attrCatBuf;
+      attrCacheEntry->dirty = true;
       return SUCCESS;
     }
   }
@@ -138,16 +139,17 @@ int AttrCacheTable::setAttrCatEntry(int relId,int attrOffset, AttrCatEntry *attr
     return E_RELNOTOPEN;
   }
 
-  for(auto iter = AttrCacheTable::attrCache[relId]; iter != nullptr; iter = iter->next)
+  for(auto attrCacheEntry = attrCache[relId]; attrCacheEntry != nullptr; attrCacheEntry = attrCacheEntry->next)
   {
-    if(iter->attrCatEntry.offset == attrOffset)
+    auto attrCatEntry = attrCacheEntry->attrCatEntry;
+    if(attrCatEntry.offset == attrOffset)
     {
       // copy the attrCatBuf to the corresponding Attribute Catalog entry in
       // the Attribute Cache Table.
-      iter->attrCatEntry=*attrCatBuf;
+      attrCacheEntry->attrCatEntry = *attrCatBuf;
       // set the dirty flag of the corresponding Attribute Cache entry in the
       // Attribute Cache Table.
-      iter->dirty=true;
+      attrCacheEntry->dirty = true;
       return SUCCESS;
     }
   }
